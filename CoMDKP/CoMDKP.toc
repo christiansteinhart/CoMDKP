@@ -1,0 +1,7 @@
+## Interface: 70000
+## Title: Clarity of Mind - DKP Helper
+## Notes: DKP Helper based on the Clarity of Mind DKP system
+##
+embeds.xml
+
+CoMDKP.lua
