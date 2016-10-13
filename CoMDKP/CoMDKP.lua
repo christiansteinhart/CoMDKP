@@ -29,7 +29,7 @@ function CoMDKP:OnEnable()
 	local historyButton = AceGUI:Create("Button")
 	historyButton:SetText("History")
 	historyButton:SetRelativeWidth(0.25)
-	historyButton:SetCallback("OnClick", function() print ("Noch nicht implementiert") end)
+	historyButton:SetCallback("OnClick", function() CoMDKP:showHistory() end)
 	CoMDKP.mainFrame:AddChild(historyButton)
 
 	local helperButton = AceGUI:Create("Button")
@@ -143,13 +143,13 @@ function CoMDKP:createDKPLine(player, points)
 	line:SetLayout("Flow")
 
 	local name = AceGUI:Create("Label")
-	name:SetRelativeWidth(0.2)
+	name:SetRelativeWidth(0.3)
   	name:SetText(player)
   	name:SetColor(255,255,255)
   	line:AddChild(name)
 
 	local dkp = AceGUI:Create("Label")
-	dkp:SetRelativeWidth(0.2)
+	dkp:SetRelativeWidth(0.1)
   	dkp:SetText(points)
   	dkp:SetColor(255,255,255)
   	line:AddChild(dkp)
@@ -209,6 +209,99 @@ function CoMDKP:createDKPLine(player, points)
   	return line
 end
 
+function CoMDKP:showHistory()
+	local historyFrame = AceGUI:Create("Frame")
+	historyFrame:SetTitle("DKP History")
+	historyFrame:SetLayout("Flow")
+	historyFrame:SetWidth(600)
+	historyFrame:SetCallback("OnClose", function(widget) widget:ReleaseChildren(); AceGUI:Release(widget) end)
+
+	local scrollcontainer = AceGUI:Create("SimpleGroup") -- "InlineGroup" is also good
+	scrollcontainer:SetFullWidth(true)
+	scrollcontainer:SetFullHeight(true) -- probably?
+	scrollcontainer:SetLayout("Fill") -- important!
+
+	historyFrame:AddChild(scrollcontainer)
+
+	local scroll = AceGUI:Create("ScrollFrame")
+	scroll:SetLayout("Flow") -- probably?
+	scrollcontainer:AddChild(scroll)
+
+	local header = {};
+	header.player = "Spieler"
+	header.before = "Punkte davor"
+	header.after = "Punkte danach"
+	header.cost = "Abzug"
+
+	scroll:AddChild(CoMDKP:createHistoryLine(0,header,historyFrame))
+	for i, v in ipairs(CoMDKP.history) do
+  		scroll:AddChild(CoMDKP:createHistoryLine(i,v,historyFrame))
+	end
+end
+
+function CoMDKP:createHistoryLine(index, history, parent)
+	local line = AceGUI:Create("SimpleGroup")
+	line:SetFullWidth(true)
+	line:SetLayout("Flow")
+
+	local name = AceGUI:Create("Label")
+	name:SetRelativeWidth(0.2)
+  	name:SetText(history.player)
+  	name:SetColor(255,255,255)
+  	line:AddChild(name)
+
+	local before = AceGUI:Create("Label")
+	before:SetRelativeWidth(0.2)
+  	before:SetText(history.before)
+  	before:SetColor(255,255,255)
+  	line:AddChild(before)
+
+  	local after = AceGUI:Create("Label")
+	after:SetRelativeWidth(0.2)
+  	after:SetText(history.after)
+  	after:SetColor(255,255,255)
+  	line:AddChild(after)
+
+  	local cost = AceGUI:Create("Label")
+	cost:SetRelativeWidth(0.2)
+  	cost:SetText(history.cost)
+  	cost:SetColor(255,255,255)
+  	line:AddChild(cost)
+
+  	if (index ~= 0) then
+	  	local undo = AceGUI:Create("Button")
+	  	undo:SetRelativeWidth(0.2)
+	  	undo:SetText("Rückgängig")
+	  	undo:SetUserData("historyIndex", index)
+	  	undo:SetCallback("OnClick", function(widget)
+	  		CoMDKP:UndoHistory(widget:GetUserData("historyIndex"))
+	  		parent:Hide()
+	  	end)
+	  	undo:SetCallback("OnEnter", function () 
+	  		name:SetColor(255,0,0)
+	  		before:SetColor(255,0,0)
+	  		after:SetColor(255,0,0)
+	  		cost:SetColor(255,0,0)
+	  	end)
+	  	undo:SetCallback("OnLeave", function ()
+	  		name:SetColor(255,255,255)
+	  		before:SetColor(255,255,255) 
+	  		after:SetColor(255,255,255) 
+	  		cost:SetColor(255,255,255) 
+	  	end)
+	  	line:AddChild(undo)
+	end
+
+  	return line
+end
+
+function CoMDKP:UndoHistory(index)
+	local history = CoMDKP.history[index]
+	CoMDKP.points[history.player] = CoMDKP.points[history.player] + history.cost
+	table.remove(CoMDKP.history, index)
+	CoMDKP:Refresh()
+end
+
 function CoMDKP:adjustDKPByPercent(player, percent)
 	local basePoints = CoMDKP.points[player]
 	local cost = math.floor(basePoints / 100 * percent + 0.5)
@@ -218,7 +311,7 @@ function CoMDKP:adjustDKPByPercent(player, percent)
 	history.player = player
 	history.before = basePoints
 	history.cost = cost
-	history.after = after
+	history.after = newPoints
 	table.insert(CoMDKP.history, history)
 	return newPoints, cost
 end
