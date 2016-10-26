@@ -89,6 +89,7 @@ end
 function CoMDKP:Import(text)
 	CoMDKP.points = {}
 	CoMDKP.names = {}
+	CoMDKP.history = {}
 	local name;
 	for i in string.gmatch(text, "%S+") do
 	  if name == nil 

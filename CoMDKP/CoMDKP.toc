@@ -1,4 +1,4 @@
-## Interface: 70000
+## Interface: 70100
 ## Title: Clarity of Mind - DKP Helper
 ## Notes: DKP Helper based on the Clarity of Mind DKP system
 ##
