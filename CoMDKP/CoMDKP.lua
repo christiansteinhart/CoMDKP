@@ -106,10 +106,7 @@ function CoMDKP:Import(text)
 end
 
 function CoMDKP:ShowExport()
-	local exportText = ""
-	for i, v in ipairs(CoMDKP.names) do
-  		exportText = exportText .. v .. "\t" .. CoMDKP.points[v] .. "\n"
-	end
+	local exportText = CoMDKP:CreateExportString()
 	local importDKPFrame = AceGUI:Create("Frame")
 	importDKPFrame:SetTitle("Export DKP")
 	importDKPFrame:SetWidth(400)
@@ -124,6 +121,15 @@ function CoMDKP:ShowExport()
 	editbox:HighlightText(0, string.len(exportText))
 	editbox:SetFocus()
 	importDKPFrame:AddChild(editbox)
+end
+
+function CoMDKP:CreateExportString()
+	local exportText = ""
+	for i, v in ipairs(CoMDKP.names) do
+  		exportText = exportText .. v .. "\t" .. CoMDKP.points[v] .. "\n"
+	end
+
+	return exportText
 end
 
 function CoMDKP:ShowDKP()
