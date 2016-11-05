@@ -6,6 +6,7 @@ local AceGUI = LibStub("AceGUI-3.0")
 CoMDKP.points = {}
 CoMDKP.names = {}
 CoMDKP.history = {}
+CoMDKP.attendance = {}
 
 function CoMDKP:OnEnable()
 	CoMDKP.mainFrame = AceGUI:Create("Frame")
@@ -90,6 +91,8 @@ function CoMDKP:Import(text)
 	CoMDKP.points = {}
 	CoMDKP.names = {}
 	CoMDKP.history = {}
+    CoMDKP.attendance = {}
+
 	local name;
 	for i in string.gmatch(text, "%S+") do
 	  if name == nil 
@@ -125,11 +128,34 @@ end
 
 function CoMDKP:CreateExportString()
 	local exportText = ""
-	for i, v in ipairs(CoMDKP.names) do
-  		exportText = exportText .. v .. "\t" .. CoMDKP.points[v] .. "\n"
+
+	local dateText = date("%Y-%m-%d")
+	local reason = "Lootzuweisung"
+
+    local player, points
+
+	for _, v in pairs(CoMDKP.history) do
+		player = v.player
+		points = v.cost * -1
+		exportText = exportText .. CoMDKP:CreateExportLine(player, points, reason, dateText)
 	end
 
+
+    reason = "Anwesenheit"
+    for i, v in pairs(CoMDKP.attendance) do
+        player = i
+        points = v * 100
+
+        if points > 0 then
+            exportText = exportText .. CoMDKP:CreateExportLine(player, points, reason, dateText)
+        end
+    end
+
 	return exportText
+end
+
+function CoMDKP:CreateExportLine(player, points, reason, date)
+	return player .. "\t" .. points .. "\t" .. reason  .. "\t" .. date .. "\n"
 end
 
 function CoMDKP:ShowDKP()
@@ -149,8 +175,15 @@ function CoMDKP:createDKPLine(player, points)
 	line:SetFullWidth(true)
 	line:SetLayout("Flow")
 
+  	local checkAttend = AceGUI:Create("CheckBox")
+	checkAttend:SetRelativeWidth(0.05)
+  	checkAttend:SetTriState(true)
+	checkAttend:SetCallback("OnValueChanged", function(widget, callback, value) CoMDKP:SetAttendance(widget:GetUserData("player"), value) end)
+	checkAttend:SetUserData("player", player)
+  	line:AddChild(checkAttend)
+
 	local name = AceGUI:Create("Label")
-	name:SetRelativeWidth(0.3)
+	name:SetRelativeWidth(0.25)
   	name:SetText(player)
   	name:SetColor(255,255,255)
   	line:AddChild(name)
@@ -160,6 +193,9 @@ function CoMDKP:createDKPLine(player, points)
   	dkp:SetText(points)
   	dkp:SetColor(255,255,255)
   	line:AddChild(dkp)
+
+  	checkAttend:SetCallback("OnEnter", function () name:SetColor(255,0,0); dkp:SetColor(255,0,0) end)
+  	checkAttend:SetCallback("OnLeave", function () name:SetColor(255,255,255); dkp:SetColor(255,255,255) end)
 
   	local btn50 = AceGUI:Create("Button")
   	btn50:SetRelativeWidth(0.15)
@@ -211,7 +247,7 @@ function CoMDKP:createDKPLine(player, points)
   	end)	
   	btn20:SetCallback("OnEnter", function () name:SetColor(255,0,0); dkp:SetColor(255,0,0) end)
   	btn20:SetCallback("OnLeave", function () name:SetColor(255,255,255); dkp:SetColor(255,255,255) end)
-  	line:AddChild(btn20)
+  	line:AddChild(btn20)  	
 
   	return line
 end
@@ -321,6 +357,19 @@ function CoMDKP:adjustDKPByPercent(player, percent)
 	history.after = newPoints
 	table.insert(CoMDKP.history, history)
 	return newPoints, cost
+end
+
+function CoMDKP:SetAttendance(player, attendance)
+	local ratio;
+	if attendance == nil then 
+		ratio = 0.5
+	elseif attendance == true then
+		ratio = 1
+	else
+		ratio = 0;
+	end
+
+	CoMDKP.attendance[player] = ratio
 end
 
 function CoMDKP:LootFrameHelp()
