@@ -2,6 +2,7 @@ local AddonName = "CoMDKP"
 local CoMDKP = LibStub("AceAddon-3.0"):NewAddon(AddonName, "AceConsole-3.0");
 
 local AceGUI = LibStub("AceGUI-3.0")
+local LibQTip = LibStub('LibQTip-1.0')
 
 CoMDKP.points = {}
 CoMDKP.names = {}
@@ -206,8 +207,16 @@ function CoMDKP:createDKPLine(player, points)
   		print(string.format("%s wurden %d Punkte abgezogen.", widget:GetUserData("player"), cost))
   		dkp:SetText(newDKP)
   	end)
-  	btn50:SetCallback("OnEnter", function () name:SetColor(255,0,0); dkp:SetColor(255,0,0) end)
-  	btn50:SetCallback("OnLeave", function () name:SetColor(255,255,255); dkp:SetColor(255,255,255) end)
+  	btn50:SetCallback("OnEnter", function (widget)
+        name:SetColor(255,0,0)
+        dkp:SetColor(255,0,0)
+        CoMDKP:ShowItemsTooltip(widget.frame, {"Trinket"})
+    end)
+  	btn50:SetCallback("OnLeave", function (widget)
+        name:SetColor(255,255,255)
+        dkp:SetColor(255,255,255)
+        CoMDKP:HideItemsTooltip(widget.frame)
+    end)
   	line:AddChild(btn50)
 
   	local btn33 = AceGUI:Create("Button")
@@ -219,8 +228,16 @@ function CoMDKP:createDKPLine(player, points)
   		print(string.format("%s wurden %d Punkte abgezogen.", widget:GetUserData("player"), cost))
   		dkp:SetText(newDKP)
   	end)
-  	btn33:SetCallback("OnEnter", function () name:SetColor(255,0,0); dkp:SetColor(255,0,0) end)
-  	btn33:SetCallback("OnLeave", function () name:SetColor(255,255,255); dkp:SetColor(255,255,255) end)
+  	btn33:SetCallback("OnEnter", function (widget)
+        name:SetColor(255,0,0)
+        dkp:SetColor(255,0,0)
+        CoMDKP:ShowItemsTooltip(widget.frame, {"Helm", "Brust", "Beine", "Relikte"})
+    end)
+  	btn33:SetCallback("OnLeave", function (widget)
+        name:SetColor(255,255,255)
+        dkp:SetColor(255,255,255)
+        CoMDKP:HideItemsTooltip(widget.frame)
+    end)
    	line:AddChild(btn33)
 
   	local btn25 = AceGUI:Create("Button")
@@ -232,8 +249,16 @@ function CoMDKP:createDKPLine(player, points)
   		print(string.format("%s wurden %d Punkte abgezogen.", widget:GetUserData("player"), cost))
   		dkp:SetText(newDKP)
   	end)
-  	btn25:SetCallback("OnEnter", function () name:SetColor(255,0,0); dkp:SetColor(255,0,0) end)
-  	btn25:SetCallback("OnLeave", function () name:SetColor(255,255,255); dkp:SetColor(255,255,255) end)
+  	btn25:SetCallback("OnEnter", function (widget)
+        name:SetColor(255,0,0)
+        dkp:SetColor(255,0,0)
+        CoMDKP:ShowItemsTooltip(widget.frame, {"Schultern", "Hände", "Gürtel", "Füße"})
+    end)
+  	btn25:SetCallback("OnLeave", function (widget)
+        name:SetColor(255,255,255)
+        dkp:SetColor(255,255,255)
+        CoMDKP:HideItemsTooltip(widget.frame)
+    end)
   	line:AddChild(btn25)
 
   	local btn20 = AceGUI:Create("Button")
@@ -245,8 +270,16 @@ function CoMDKP:createDKPLine(player, points)
   		print(string.format("%s wurden %d Punkte abgezogen.", widget:GetUserData("player"), cost))
   		dkp:SetText(newDKP)
   	end)	
-  	btn20:SetCallback("OnEnter", function () name:SetColor(255,0,0); dkp:SetColor(255,0,0) end)
-  	btn20:SetCallback("OnLeave", function () name:SetColor(255,255,255); dkp:SetColor(255,255,255) end)
+  	btn20:SetCallback("OnEnter", function (widget)
+        name:SetColor(255,0,0)
+        dkp:SetColor(255,0,0)
+        CoMDKP:ShowItemsTooltip(widget.frame, {"Hals", "Ring", "Rücken", "Armschienen"})
+    end)
+  	btn20:SetCallback("OnLeave", function (widget)
+        name:SetColor(255,255,255)
+        dkp:SetColor(255,255,255)
+        CoMDKP:HideItemsTooltip(widget.frame)
+    end)
   	line:AddChild(btn20)  	
 
   	return line
@@ -383,4 +416,22 @@ function CoMDKP:LootFrameHelp()
 			break;
 		end
 	end
+end
+
+
+function CoMDKP:ShowItemsTooltip(frame, items)
+    local tooltip = LibQTip:Acquire("ComDKPItemsTooltip", 1, "LEFT")
+    frame.tooltip = tooltip
+   
+    for _, v in pairs(items) do
+        tooltip:AddLine(v)
+    end
+   
+    tooltip:SmartAnchorTo(frame)
+    tooltip:Show()
+end
+
+function CoMDKP:HideItemsTooltip(frame)
+    LibQTip:Release(frame.tooltip)
+    self.tooltip = nil
 end
