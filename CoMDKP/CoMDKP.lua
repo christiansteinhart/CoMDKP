@@ -4,10 +4,19 @@ local CoMDKP = LibStub("AceAddon-3.0"):NewAddon(AddonName, "AceConsole-3.0");
 local AceGUI = LibStub("AceGUI-3.0")
 local LibQTip = LibStub('LibQTip-1.0')
 
-CoMDKP.points = {}
-CoMDKP.names = {}
-CoMDKP.history = {}
-CoMDKP.attendance = {}
+local defaults = {
+    profile = {
+        points = {},
+        names = {},
+        history = {},
+        attendance = {},
+    }
+}
+
+function CoMDKP:OnInitialize()
+    CoMDKP.db = LibStub("AceDB-3.0"):New("ComDKPDB", defaults, true)
+end
+
 
 function CoMDKP:OnEnable()
 	CoMDKP.mainFrame = AceGUI:Create("Frame")
@@ -57,7 +66,7 @@ end
 CoMDKP:RegisterChatCommand("comdkp", "SlashCommand")
 function CoMDKP:SlashCommand(msg, editbox)
 	if msg == "debug" then
-		for i, v in pairs(CoMDKP.points) do
+		for i, v in pairs(CoMDKP.db.profile.points) do
 	  		print(i, v)
 		end
 		return
@@ -89,10 +98,10 @@ function CoMDKP:ShowImport()
 end
 
 function CoMDKP:Import(text)
-	CoMDKP.points = {}
-	CoMDKP.names = {}
-	CoMDKP.history = {}
-    CoMDKP.attendance = {}
+	CoMDKP.db.profile.points = {}
+	CoMDKP.db.profile.names = {}
+	CoMDKP.db.profile.history = {}
+    CoMDKP.db.profile.attendance = {}
 
 	local name;
 	for i in string.gmatch(text, "%S+") do
@@ -100,12 +109,12 @@ function CoMDKP:Import(text)
 	    then 
 	      name = i
 	    else
-	      CoMDKP.points[name] = i
-	      table.insert(CoMDKP.names, name)
+	      CoMDKP.db.profile.points[name] = i
+	      table.insert(CoMDKP.db.profile.names, name)
 	      name = nil
 	  end
 	end
-	table.sort(CoMDKP.names)
+	table.sort(CoMDKP.db.profile.names)
 	CoMDKP:Refresh()
 end
 
@@ -135,7 +144,7 @@ function CoMDKP:CreateExportString()
 
     local player, points
 
-	for _, v in pairs(CoMDKP.history) do
+	for _, v in pairs(CoMDKP.db.profile.history) do
 		player = v.player
 		points = v.cost * -1
 		exportText = exportText .. CoMDKP:CreateExportLine(player, points, reason, dateText)
@@ -143,7 +152,7 @@ function CoMDKP:CreateExportString()
 
 
     reason = "Anwesenheit"
-    for i, v in pairs(CoMDKP.attendance) do
+    for i, v in pairs(CoMDKP.db.profile.attendance) do
         player = i
         points = v * 100
 
@@ -166,8 +175,8 @@ end
 
 function CoMDKP:Refresh()
 	CoMDKP.scroll:ReleaseChildren();
-	for i, v in ipairs(CoMDKP.names) do
-  		CoMDKP.scroll:AddChild(CoMDKP:createDKPLine(v,CoMDKP.points[v]))
+	for i, v in ipairs(CoMDKP.db.profile.names) do
+  		CoMDKP.scroll:AddChild(CoMDKP:createDKPLine(v,CoMDKP.db.profile.points[v]))
 	end
 end
 
@@ -231,7 +240,7 @@ function CoMDKP:createDKPLine(player, points)
   	btn33:SetCallback("OnEnter", function (widget)
         name:SetColor(255,0,0)
         dkp:SetColor(255,0,0)
-        CoMDKP:ShowItemsTooltip(widget.frame, {"Helm", "Brust", "Beine", "Relikte"})
+        CoMDKP:ShowItemsTooltip(widget.frame, {"Set-Token", "Helm", "Brust", "Beine", "Relikte"})
     end)
   	btn33:SetCallback("OnLeave", function (widget)
         name:SetColor(255,255,255)
@@ -310,7 +319,7 @@ function CoMDKP:showHistory()
 	header.cost = "Abzug"
 
 	scroll:AddChild(CoMDKP:createHistoryLine(0,header,historyFrame))
-	for i, v in ipairs(CoMDKP.history) do
+	for i, v in ipairs(CoMDKP.db.profile.history) do
   		scroll:AddChild(CoMDKP:createHistoryLine(i,v,historyFrame))
 	end
 end
@@ -372,23 +381,23 @@ function CoMDKP:createHistoryLine(index, history, parent)
 end
 
 function CoMDKP:UndoHistory(index)
-	local history = CoMDKP.history[index]
-	CoMDKP.points[history.player] = CoMDKP.points[history.player] + history.cost
-	table.remove(CoMDKP.history, index)
+	local history = CoMDKP.db.profile.history[index]
+	CoMDKP.db.profile.points[history.player] = CoMDKP.db.profile.points[history.player] + history.cost
+	table.remove(CoMDKP.db.profile.history, index)
 	CoMDKP:Refresh()
 end
 
 function CoMDKP:adjustDKPByPercent(player, percent)
-	local basePoints = CoMDKP.points[player]
+	local basePoints = CoMDKP.db.profile.points[player]
 	local cost = math.floor(basePoints / 100 * percent + 0.5)
 	local newPoints = basePoints - cost
-	CoMDKP.points[player] = newPoints
+	CoMDKP.db.profile.points[player] = newPoints
 	local history = {}
 	history.player = player
 	history.before = basePoints
 	history.cost = cost
 	history.after = newPoints
-	table.insert(CoMDKP.history, history)
+	table.insert(CoMDKP.db.profile.history, history)
 	return newPoints, cost
 end
 
@@ -402,15 +411,15 @@ function CoMDKP:SetAttendance(player, attendance)
 		ratio = 0;
 	end
 
-	CoMDKP.attendance[player] = ratio
+	CoMDKP.db.profile.attendance[player] = ratio
 end
 
 function CoMDKP:LootFrameHelp()
 	for i,playerFrame in ipairs(LootHistoryFrame.usedPlayerFrames) do
 		playerFrameText = playerFrame.PlayerName:GetText()
 		for playerName in string.gmatch(playerFrameText, "%a+-?%a*") do
-			if CoMDKP.points[playerName] ~= nil then
-				text = CoMDKP.points[playerName]  .. " - " .. playerName;
+			if CoMDKP.db.profile.points[playerName] ~= nil then
+				text = CoMDKP.db.profile.points[playerName]  .. " - " .. playerName;
 				playerFrame.PlayerName:SetText(text)
 			end
 			break;
