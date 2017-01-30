@@ -417,14 +417,21 @@ end
 function CoMDKP:LootFrameHelp()
 	for i,playerFrame in ipairs(LootHistoryFrame.usedPlayerFrames) do
 		playerFrameText = playerFrame.PlayerName:GetText()
-		for playerName in string.gmatch(playerFrameText, "%a+-?%a*") do
-			if CoMDKP.db.profile.points[playerName] ~= nil then
-				text = CoMDKP.db.profile.points[playerName]  .. " - " .. playerName;
-				playerFrame.PlayerName:SetText(text)
-			end
-			break;
+		playerName = CoMDKP:ExtractPlayerNameFromLootFrameText(playerFrameText)
+		if CoMDKP.db.profile.points[playerName] ~= nil then
+			text = CoMDKP.db.profile.points[playerName]  .. " + " .. playerName;
+			playerFrame.PlayerName:SetText(text)
 		end
 	end
+end
+
+function CoMDKP:ExtractPlayerNameFromLootFrameText(t)
+    local p
+    _, p = string.find(t, "+ ")
+    if p == nil then
+        return t
+    end
+    return string.sub(t, p+1, -1)
 end
 
 
